@@ -14,7 +14,8 @@ class Model(object):
         self.log_dir = args.log_dir
 
         self.restore = args.restore
-
+        
+        self.channels = args.channels
         self.epochs = args.epochs
         self.batch_size = args.batch_size
         self.iterations = len(self.train_x) // self.batch_size
@@ -25,35 +26,53 @@ class Model(object):
 ##############################################################################
 #Generator: Generate model in this section
 ##############################################################################
-    def network(self,x,reuse=False):
+    def network(self,x,reuse=False, is_training=True):
         with tf.variable_scope('network', reuse=reuse):
-            #Add all layers below
+            x = conv(x, channels=self.channels, kernel=3,
+                    strides=2 , use_bias=self.use_bias, scope='conv_0')
+            x = max_pool(x)
+            x = batch_norm(x,True,'batch_norm_0')
+            x = relu(x)
 
+            x = conv(x, channels=self.channels*2, kernel=3,
+                    strides=1, use_bias=self.use_bias, scope='conv_1')
+            x = max_pool(x)
+            x = batch_norm(x,is_training=is_training,'batch_norm_1')
+            x = relu(x)
+
+            x = dense(x,units=self.label_dim, scope='logit')
+
+            return x
 
 ##############################################################################
 #Model: Assemble model
 ##############################################################################
     def build_model(self):
         #Graph Input
-        self.train_inputs = tf.placeholder()
-        self.train_labels = tf.placeholder()
+        self.train_inputs = tf.placeholder(tf.float32,
+                [self.batch_size, self.img_size,self.img_size,self.z_dim], name = 'train_inputs'))
+        self.train_labels = tf.placeholder(tf.float32,
+                [self.batch_size, self.label_dim], name='train_labels')
 
-        self.test_inputs = tf.placeholder()
-        self.tests_labels = tf.placeholder()
+        self.test_inputs = tf.placeholder(tf.float32, 
+                [len(self.test_x), self.img_size, self.img_size, self.z_dim], name = 'test_inputs')
+        self.tests_labels = tf.placeholder(tf.float32,
+                [len(self.test_y), self.label_dim], name='test_labels')
 
-        #self.lr = tf.placeholder()
+        self.lr = tf.placeholder(tf.float32, name='learning_rate')
 
 
         #Model
         self.train_logits = self.network(self.train_inputs)
-        self.test_logits = self.network(self.test_inputs)
+        self.test_logits = self.network(self.test_inputs,reuse=True,is_training=False)
 
-        self.train_loss, self.train_accuracy = #loss function here
-        self.test_loss, self.test_accuracy = #loss function here
+        self.train_loss, self.train_accuracy = class_loss(logit=self.train_logits, label=self.train_labels)
+        self.test_loss, self.test_accuracy = class_loss(logit=self.test_logits, label=self.test_labels)
 
 
         #Training
-        self.optim = #optimization function here
+        self.optim = optimizer(self.lr).minimize(self.train_loss)
+
 
         #Summary
         self.summary_train_loss = tf.summary.scalar('train_loss', self.train_loss)
