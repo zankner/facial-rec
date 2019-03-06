@@ -2,6 +2,12 @@ import tensorflow as tf
 import tensorflow.contrib as tf_contrib
 import numpy as np
 
+##############################################################################
+#Initializers: Define weight initializers
+##############################################################################
+
+weight_init = tf_contrib.layers.xavier_initializer()
+weight_reg = tf_contrib.layers.l2_regularizer(1e-3)
 
 ##############################################################################
 #Layers: Define the layers of your model in this section
@@ -29,7 +35,7 @@ def flatten(x):
     return tf.layers.flatten(x)
 
 def max_pool(x):
-    return tf.layers.average_pooling(x, pool_size=2, strides=2, padding="SAME")
+    return tf.layers.average_pooling2d(x, pool_size=2, strides=2, padding="SAME")
 
 ##############################################################################
 #Activation: Define the activation functions of your model in this section

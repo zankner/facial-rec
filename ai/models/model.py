@@ -1,4 +1,5 @@
 import tensorflow as tf
+import os
 import numpy as np
 from ops import *
 
@@ -8,17 +9,27 @@ class Model(object):
         self.model_name = 'model_name'
         self.sess = sess
 
-        self.train_x, self.train_y, self.test_x, self.test_y = load_data()
+        #self.train_x, self.train_y, self.test_x, self.test_y = load_data()
+
+        self.train_x =tf.constant(np.random.rand(args.batch_size,args.img_size,args.img_size,args.z_dim))
+        self.test_x = tf.constant(np.random.rand(10, args.img_size, args.img_size, args.z_dim))
+        self.train_y = tf.constant(np.random.rand(args.batch_size, args.label_dim))
+        self.test_y = tf.constant(np.random.rand(10, args.label_dim))
 
         self.checkpoint_dir = args.checkpoint_dir
         self.log_dir = args.log_dir
 
         self.restore = args.restore
+
+        self.img_size = args.img_size
+        self.z_dim = args.z_dim
+        self.label_dim = args.label_dim
         
         self.channels = args.channels
         self.epochs = args.epochs
         self.batch_size = args.batch_size
-        self.iterations = len(self.train_x) // self.batch_size
+        self.iterations = self.test_x.shape[0] // self.batch_size
+        self.use_bias = args.use_bias 
 
         self.lr = args.lr
 
@@ -29,18 +40,18 @@ class Model(object):
     def network(self,x,reuse=False, is_training=True):
         with tf.variable_scope('network', reuse=reuse):
             x = conv(x, channels=self.channels, kernel=3,
-                    strides=2 , use_bias=self.use_bias, scope='conv_0')
+                    stride=2, padding='SAME', use_bias=self.use_bias, scope='conv_0')
             x = max_pool(x)
-            x = batch_norm(x,True,'batch_norm_0')
+            x = batch_norm(x,is_training,'batch_norm_0')
             x = relu(x)
 
             x = conv(x, channels=self.channels*2, kernel=3,
-                    strides=1, use_bias=self.use_bias, scope='conv_1')
+                    stride=1, padding='SAME', use_bias=self.use_bias, scope='conv_1')
             x = max_pool(x)
-            x = batch_norm(x,is_training=is_training,'batch_norm_1')
+            x = batch_norm(x,is_training,'batch_norm_1')
             x = relu(x)
 
-            x = dense(x,units=self.label_dim, scope='logit')
+            x = dense(x,units=self.label_dim, use_bias=self.use_bias, scope='logit')
 
             return x
 
@@ -50,14 +61,14 @@ class Model(object):
     def build_model(self):
         #Graph Input
         self.train_inputs = tf.placeholder(tf.float32,
-                [self.batch_size, self.img_size,self.img_size,self.z_dim], name = 'train_inputs'))
+                [self.batch_size, self.img_size,self.img_size,self.z_dim], name = 'train_inputs')
         self.train_labels = tf.placeholder(tf.float32,
                 [self.batch_size, self.label_dim], name='train_labels')
 
         self.test_inputs = tf.placeholder(tf.float32, 
-                [len(self.test_x), self.img_size, self.img_size, self.z_dim], name = 'test_inputs')
-        self.tests_labels = tf.placeholder(tf.float32,
-                [len(self.test_y), self.label_dim], name='test_labels')
+                [self.test_x.shape[0], self.img_size, self.img_size, self.z_dim], name = 'test_inputs')
+        self.test_labels = tf.placeholder(tf.float32,
+                [self.test_y.shape[0], self.label_dim], name='test_labels')
 
         self.lr = tf.placeholder(tf.float32, name='learning_rate')
 
@@ -66,8 +77,8 @@ class Model(object):
         self.train_logits = self.network(self.train_inputs)
         self.test_logits = self.network(self.test_inputs,reuse=True,is_training=False)
 
-        self.train_loss, self.train_accuracy = class_loss(logit=self.train_logits, label=self.train_labels)
-        self.test_loss, self.test_accuracy = class_loss(logit=self.test_logits, label=self.test_labels)
+        self.train_loss, self.train_accuracy = class_loss(logits=self.train_logits, labels=self.train_labels)
+        self.test_loss, self.test_accuracy = class_loss(logits=self.test_logits, labels=self.test_labels)
 
 
         #Training
@@ -97,7 +108,7 @@ class Model(object):
         self.saver = tf.train.Saver()
 
         #writer to write summary
-        self.writer = tf.summary.FileWrite(self.log_dir + '/' + self.model_dir, self.sess.graph)
+        self.writer = tf.summary.FileWriter(self.log_dir + '/' + self.model_dir, self.sess.graph)
 
         #restore checkpoint if it exists
         if self.restore:
@@ -131,8 +142,8 @@ class Model(object):
                 }
 
                 test_feed_dict = {
-                    self.test_inputs : test_x,
-                    self.test_y : test_y
+                    self.test_inputs : self.test_x,
+                    self.test_y : self.test_y
                 }
 
                 #update network
@@ -165,7 +176,7 @@ class Model(object):
 
     @property
     def model_dir(self):
-        return '{}_{}_{}_{}'.format(self.model_name, self.dataset_name, self.batch_size, self.init_lr)
+        return '{}_{}_{}'.format(self.model_name, self.batch_size, self.lr)
 
     def save(self, checkpoint_dir, step):
         checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir)
