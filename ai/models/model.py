@@ -11,10 +11,10 @@ class Model(object):
 
         #self.train_x, self.train_y, self.test_x, self.test_y = load_data()
 
-        self.train_x =tf.constant(np.random.rand(args.batch_size,args.img_size,args.img_size,args.z_dim))
-        self.test_x = tf.constant(np.random.rand(10, args.img_size, args.img_size, args.z_dim))
-        self.train_y = tf.constant(np.random.rand(args.batch_size, args.label_dim))
-        self.test_y = tf.constant(np.random.rand(10, args.label_dim))
+        self.train_x =np.random.rand(args.batch_size,args.img_size,args.img_size,args.z_dim)
+        self.test_x = np.random.rand(10, args.img_size, args.img_size, args.z_dim)
+        self.train_y = np.random.rand(args.batch_size, args.label_dim)
+        self.test_y = np.random.rand(10, args.label_dim)
 
         self.checkpoint_dir = args.checkpoint_dir
         self.log_dir = args.log_dir
@@ -28,10 +28,12 @@ class Model(object):
         self.channels = args.channels
         self.epochs = args.epochs
         self.batch_size = args.batch_size
+        print(self.test_x.shape[0],'shape')
+        print(self.batch_size)
         self.iterations = self.test_x.shape[0] // self.batch_size
         self.use_bias = args.use_bias 
 
-        self.lr = args.lr
+        self.learning_rate = args.lr
 
 
 ##############################################################################
@@ -129,21 +131,28 @@ class Model(object):
             print('Restarting from fresh')
 
         #loop each epoch
-        for epoch in range(start_epoch, self.epochs):
-
+        for epoch in range(start_epoch, self.epochs): 
+            print('x')
             #get the batch data
+            print(start_batch_id, 'start')
+            print(self.iterations, 'iters')
             for batch_id in range(start_batch_id, self.iterations):
                 batch_x = self.train_x[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
                 batch_y = self.train_y[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
 
+                print('hello')
+
+                print(batch_y.shape)
+
                 train_feed_dict = {
                     self.train_inputs : batch_x,
                     self.train_labels : batch_y,
+                    self.lr : self.learning_rate
                 }
 
                 test_feed_dict = {
                     self.test_inputs : self.test_x,
-                    self.test_y : self.test_y
+                    self.test_labels : self.test_y
                 }
 
                 #update network
@@ -152,6 +161,8 @@ class Model(object):
                     feed_dict = train_feed_dict
                     )
                 self.writer.add_summary(summary_str, counter)
+
+                #print('hello')
 
                 #update test
                 _, summary_str, test_loss, test_accuracy = self.sess.run(
@@ -162,8 +173,8 @@ class Model(object):
 
                 #display netowrk status
                 counter +=1
-                print ('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_acc: %.2f, test_acc %.2f' \
-                %(epoch, idx, self.iteration, time.time() - start_time, train_accuracy, test_accuracy))
+                #print('hello')
+                print ('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_acc: %.2f, test_acc %.2f'%(epoch, idx, self.iteration, time.time() - start_time, train_accuracy, test_accuracy))
 
             #Reset the batch id
             start_batch_id = 0
@@ -193,7 +204,7 @@ class Model(object):
         checkpoint = tf.train.get_checkpoint_state(checkpoint_dir)
         if checkpoint and checkpoint.model_checkpoint_path:
             checkpoint_name = os.path.basename(checkpoint.model_checkpoint_path)
-            self.saver.resotre(self.sess,os.path.join(checkpoint_dir, checkpoint_name))
+            self.saver.restore(self.sess,os.path.join(checkpoint_dir, checkpoint_name))
             counter = int(checkpoint_name.split('-')[-1])
             print('[*] Success to read {}'.format(checkpoint_name))
             return True, counter
@@ -219,4 +230,4 @@ class Model(object):
         }
 
         test_accuracy = self.sess.run(self.test_accuracy, feed_dict = test_feed_dict)
-        print('test_acc: {}'.format(test_accuracys))
+        print('test_acc: {}'.format(test_accuracy))
