@@ -16,8 +16,8 @@ def parse_args():
     parser.add_argument('--label_dim', type=int, default=10, help='Num output categories')
     parser.add_argument('--channels', type=int, default=64, help='Number of conv channels')
 
-    parser.add_argument('--epochs', type=int, default=1000, help='The number of epochs to run')
-    parser.add_argument('--batch_size', type=int, default=1, help='The size of a batch')
+    parser.add_argument('--epochs', type=int, default=10, help='The number of epochs to run')
+    parser.add_argument('--batch_size', type=int, default=10, help='The size of a batch')
     parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
     parser.add_argument('--use_bias', type=bool, default=True, help='Bias term')
 

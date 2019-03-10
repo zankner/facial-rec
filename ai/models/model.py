@@ -28,8 +28,6 @@ class Model(object):
         self.channels = args.channels
         self.epochs = args.epochs
         self.batch_size = args.batch_size
-        print(self.test_x.shape[0],'shape')
-        print(self.batch_size)
         self.iterations = self.test_x.shape[0] // self.batch_size
         self.use_bias = args.use_bias 
 
@@ -131,30 +129,22 @@ class Model(object):
             print('Restarting from fresh')
 
         #loop each epoch
-        for epoch in range(start_epoch, self.epochs): 
-            print('x')
-            #get the batch data
-            print(start_batch_id, 'start')
-            print(self.iterations, 'iters')
+        for epoch in range(start_epoch, self.epochs):
             for batch_id in range(start_batch_id, self.iterations):
                 batch_x = self.train_x[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
                 batch_y = self.train_y[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
-
-                print('hello')
-
-                print(batch_y.shape)
 
                 train_feed_dict = {
                     self.train_inputs : batch_x,
                     self.train_labels : batch_y,
                     self.lr : self.learning_rate
                 }
-
+                '''
                 test_feed_dict = {
                     self.test_inputs : self.test_x,
                     self.test_labels : self.test_y
                 }
-
+                '''
                 #update network
                 _, summary_str, train_loss, train_accuracy = self.sess.run(
                     [self.optim, self.train_summary, self.train_loss, self.train_accuracy],
@@ -162,19 +152,19 @@ class Model(object):
                     )
                 self.writer.add_summary(summary_str, counter)
 
-                #print('hello')
-
                 #update test
+                '''
                 _, summary_str, test_loss, test_accuracy = self.sess.run(
                     [self.optim, self.test_summary, self.test_loss, self.test_accuracy],
-                    feed_dict = test_feed_dict
+                    feed_dict = train_feed_dict
                     )
                 self.writer.add_summary(summary_str, counter)
+                '''
 
                 #display netowrk status
                 counter +=1
-                #print('hello')
-                print ('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_acc: %.2f, test_acc %.2f'%(epoch, idx, self.iteration, time.time() - start_time, train_accuracy, test_accuracy))
+                print(train_accuracy, 'acc')
+                #print ('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_acc: %.2f, test_acc %.2f'%(epoch, idx, self.iteration, time.time() - start_time, train_accuracy, test_accuracy))
 
             #Reset the batch id
             start_batch_id = 0
