@@ -134,32 +134,35 @@ class Model(object):
                 batch_x = self.train_x[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
                 batch_y = self.train_y[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
 
-                train_feed_dict = {
+                print(batch_x.shape)
+                print(batch_y.shape)
+
+                train_dict = {
                     self.train_inputs : batch_x,
                     self.train_labels : batch_y,
                     self.lr : self.learning_rate
                 }
-                '''
-                test_feed_dict = {
+                
+                _dict = {
                     self.test_inputs : self.test_x,
                     self.test_labels : self.test_y
                 }
-                '''
+                
                 #update network
                 _, summary_str, train_loss, train_accuracy = self.sess.run(
                     [self.optim, self.train_summary, self.train_loss, self.train_accuracy],
-                    feed_dict = train_feed_dict
+                    feed_dict = train_dict
                     )
                 self.writer.add_summary(summary_str, counter)
 
                 #update test
-                '''
-                _, summary_str, test_loss, test_accuracy = self.sess.run(
-                    [self.optim, self.test_summary, self.test_loss, self.test_accuracy],
-                    feed_dict = train_feed_dict
+                
+                summary_str, test_loss, test_accuracy = self.sess.run(
+                    [self.test_summary, self.test_loss, self.test_accuracy],
+                    feed_dict = _dict 
                     )
                 self.writer.add_summary(summary_str, counter)
-                '''
+                
 
                 #display netowrk status
                 counter +=1
