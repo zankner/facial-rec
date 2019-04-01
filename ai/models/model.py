@@ -1,4 +1,5 @@
 import tensorflow as tf
+import time
 import os
 import numpy as np
 from ops import *
@@ -127,15 +128,12 @@ class Model(object):
             start_batch_id = 0
             counter = 1
             print('Restarting from fresh')
-
+        start_time = time.time()
         #loop each epoch
         for epoch in range(start_epoch, self.epochs):
             for batch_id in range(start_batch_id, self.iterations):
                 batch_x = self.train_x[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
                 batch_y = self.train_y[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
-
-                print(batch_x.shape)
-                print(batch_y.shape)
 
                 train_dict = {
                     self.train_inputs : batch_x,
@@ -143,7 +141,7 @@ class Model(object):
                     self.lr : self.learning_rate
                 }
                 
-                _dict = {
+                test_dict = {
                     self.test_inputs : self.test_x,
                     self.test_labels : self.test_y
                 }
@@ -159,15 +157,14 @@ class Model(object):
                 
                 summary_str, test_loss, test_accuracy = self.sess.run(
                     [self.test_summary, self.test_loss, self.test_accuracy],
-                    feed_dict = _dict 
+                    feed_dict = test_dict 
                     )
                 self.writer.add_summary(summary_str, counter)
                 
 
                 #display netowrk status
                 counter +=1
-                print(train_accuracy, 'acc')
-                #print ('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_acc: %.2f, test_acc %.2f'%(epoch, idx, self.iteration, time.time() - start_time, train_accuracy, test_accuracy))
+                print ('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_acc: %.2f, test_acc %.2f'%(epoch, batch_id, self.iterations, time.time() - start_time, train_accuracy, test_accuracy))
 
             #Reset the batch id
             start_batch_id = 0
