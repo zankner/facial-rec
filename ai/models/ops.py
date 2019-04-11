@@ -2,6 +2,8 @@ import tensorflow as tf
 import tensorflow.contrib as tf_contrib
 import numpy as np
 
+from triplet_loss import *
+
 ##############################################################################
 #Initializers: Define weight initializers
 ##############################################################################
@@ -61,12 +63,9 @@ def batch_norm(x, is_training, scope='batch_norm'):
 #Loss: Define the loss function of your model in this section
 ##############################################################################
 
-def class_loss(logits,labels):
-    loss = tf.losses.softmax_cross_entropy(
-            onehot_labels=labels, logits=logits)
-    prediction = tf.equal(tf.argmax(logits, -1), tf.argmax(labels, -1))
-    accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
-    return loss, accuracy
+def class_loss(logits,labels,margin):
+    loss, fraction = batch_all_triplet_loss(labels, logits, margin)
+    return loss, fraction 
 
 ################################################################################
 #Optimization: Define the optimization function of your model in this section

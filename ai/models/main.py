@@ -15,6 +15,7 @@ def parse_args():
     parser.add_argument('--z_dim', type=int, default=3, help='Z dim of the images')
     parser.add_argument('--label_dim', type=int, default=10, help='Num output categories')
     parser.add_argument('--channels', type=int, default=64, help='Number of conv channels')
+    parser.add_argument('--channels', type=float, default=0.5, help='Hyperparam of triplet loss')
 
     parser.add_argument('--epochs', type=int, default=1000, help='The number of epochs to run')
     parser.add_argument('--batch_size', type=int, default=10, help='The size of a batch')

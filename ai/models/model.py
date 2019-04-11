@@ -52,7 +52,7 @@ class Model(object):
             x = batch_norm(x,is_training,'batch_norm_1')
             x = relu(x)
 
-            x = dense(x,units=self.label_dim, use_bias=self.use_bias, scope='logit')
+            x = dense(x,units=self.embedding_dim, use_bias=self.use_bias, scope='logit')
 
             return x
 
