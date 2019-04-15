@@ -34,7 +34,7 @@ def construct_dataset(filenames, labels, input_dim,batch_size):
         dataset = dataset.shuffle(len(filenames))
         dataset = dataset.map(lambda x, y:image_parse(x,y,input_dim), num_parallel_calls=3)
         dataset = dataset.map(lambda x, y:train_preprocess(x,y,batch_size), num_parallel_calls=3)
-        dataset = dataset.batch(batch_size)
+        dataset = dataset.batch(batch_size,True)
         dataset = dataset.prefetch(1)
 
     return dataset

@@ -22,7 +22,7 @@ def _get_triplet_mask(labels):
     a_not_equal_n = tf.expand_dims(indices_not_equal, 1)
     p_not_equal_n = tf.expand_dims(indices_not_equal, 0)
 
-    distinct_indices = tf.logical_and(tf.logical_and(a_not_equal_n, a_not_equal_n), p_not_equal_n)
+    distinct_indices = tf.logical_and(tf.logical_and(a_not_equal_n, a_not_equal_p), p_not_equal_n)
 
     label_equal = tf.equal(tf.expand_dims(labels, 0), tf.expand_dims(labels, 1))
     i_equal_j = tf.expand_dims(label_equal, 2)
