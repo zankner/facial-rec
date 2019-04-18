@@ -4,6 +4,10 @@ import os
 import numpy as np
 from ops import *
 
+import sys
+sys.path.insert(0, '../process')
+from pipeline import * 
+
 
 class Model(object):
     def __init__(self,sess,args):
@@ -110,6 +114,12 @@ class Model(object):
 
         #writer to write summary
         self.writer = tf.summary.FileWriter(self.log_dir + '/' + self.model_dir, self.sess.graph)
+
+        #Load the dataset
+        dataset = construct_dataset(self.img_dim, self.batch_size)
+
+        for epoch in range(self.epochs):
+            train_dict = {self.train_inputs}
 
         #restore checkpoint if it exists
         if self.restore:
@@ -221,3 +231,4 @@ class Model(object):
 
         test_accuracy = self.sess.run(self.test_accuracy, feed_dict = test_feed_dict)
         print('test_acc: {}'.format(test_accuracy))
+train()

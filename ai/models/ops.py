@@ -64,7 +64,7 @@ def batch_norm(x, is_training, scope='batch_norm'):
 ##############################################################################
 
 def class_loss(logits,labels,margin):
-    loss, fraction = batch_all_triplet_loss(labels, logits, margin)
+    loss, fraction = tf_contrib.losses.metric_learning.triplet_semihard_loss(labels,logits,margin) 
     return loss, fraction 
 
 ################################################################################

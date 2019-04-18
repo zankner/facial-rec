@@ -28,7 +28,10 @@ def get_files_and_labels():
     return filenames, labels 
 
 
-def construct_dataset(filenames, labels, input_dim,batch_size):
+def construct_dataset(input_dim,batch_size):
+    data = get_files_and_labels()
+    filenames = data[0]
+    labels = data[1]
     with tf.device('/cpu:0'):
         dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
         dataset = dataset.shuffle(len(filenames))
@@ -60,7 +63,13 @@ def train_preprocess(image, label, batch_size):
     return image, label
 
 
-data = get_files_and_labels()
-construct_dataset(data[0],data[1],32,32)
-
+data = construct_dataset(32,2)
+with tf.Session() as sess:
+    # Initialize the iterator
+    sess.run(init_op)
+    print(sess.run(next_element))
+    print(sess.run(next_element))
+    # Move the iterator back to the beginning
+    #sess.run(init_op)
+    #print(sess.run(next_element))
 
