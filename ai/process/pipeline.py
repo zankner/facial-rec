@@ -67,6 +67,7 @@ data = construct_dataset(32,2)
 with tf.Session() as sess:
     # Initialize the iterator
     sess.run(init_op)
+    print(next_element)
     print(sess.run(next_element))
     print(sess.run(next_element))
     # Move the iterator back to the beginning
