@@ -36,7 +36,7 @@ def final_split(input_dim,batch_size):
     print(len(filenames))
     print(len(labels))
 
-    train_inputs, train_labels, test_inputs, test_outputs = train_test_split(filenames, labels, test_size = 0.2)
+    train_inputs, test_inputs, train_labels, test_labels = train_test_split(filenames, labels, test_size = 0.2)
 
     print(len(train_inputs))
     print(len(train_labels))
@@ -47,9 +47,12 @@ def final_split(input_dim,batch_size):
     return train_data, test_data
 
 def construct_dataset(inputs, labels, input_dim,batch_size):
+
+    num_samples = len(inputs)
+
     with tf.device('/cpu:0'):
         dataset = tf.data.Dataset.from_tensor_slices((inputs, labels))
-        dataset = dataset.shuffle(len(filenames))
+        dataset = dataset.shuffle(num_samples)
         dataset = dataset.map(lambda x, y:image_parse(x,y,input_dim), num_parallel_calls=3)
         dataset = dataset.map(lambda x, y:train_preprocess(x,y,batch_size), num_parallel_calls=3)
         dataset = dataset.batch(batch_size,True)
@@ -57,9 +60,9 @@ def construct_dataset(inputs, labels, input_dim,batch_size):
 
         iterator = dataset.make_initializable_iterator()
         inputs,labels = iterator.get_next()
-        init_op = iterator.initalizer
+        init_op = iterator.initializer
 
-    return {'inputs':images,'labels':labels,'init_op':init_op,'count': len(labels)}
+    return {'inputs':inputs,'labels':labels,'init_op':init_op,'count': num_samples}
 
 def image_parse(filename, label, input_dim):
     image_string = tf.read_file(filename)
