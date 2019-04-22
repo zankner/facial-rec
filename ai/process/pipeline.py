@@ -33,13 +33,7 @@ def final_split(input_dim,batch_size):
     filenames = data[0]
     labels = data[1]
 
-    print(len(filenames))
-    print(len(labels))
-
     train_inputs, test_inputs, train_labels, test_labels = train_test_split(filenames, labels, test_size = 0.2)
-
-    print(len(train_inputs))
-    print(len(train_labels))
 
     train_data = construct_dataset(train_inputs, train_labels, input_dim, batch_size)
     test_data = construct_dataset(test_inputs, test_labels, input_dim, batch_size)
@@ -62,7 +56,7 @@ def construct_dataset(inputs, labels, input_dim,batch_size):
         inputs,labels = iterator.get_next()
         init_op = iterator.initializer
 
-    return {'inputs':inputs,'labels':labels,'init_op':init_op,'count': num_samples}
+    return {'inputs':inputs,'labels':labels,'init_op':init_op,'num_samples': num_samples}
 
 def image_parse(filename, label, input_dim):
     image_string = tf.read_file(filename)

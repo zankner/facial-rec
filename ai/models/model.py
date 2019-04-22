@@ -27,9 +27,9 @@ class Model(object):
         self.epochs = args.epochs
         self.batch_size = args.batch_size
 
-        self.data, data_len = construct_dataset(self.img_dim, self.batch_size)
+        self.train_data, self.test_data = final_split(self.img_dim, self.batch_size)
 
-        self.iterations = data_len // self.batch_size
+        self.iterations = self.train_data['num_samples'] // self.batch_size
         self.use_bias = args.use_bias 
 
         self.learning_rate = args.lr
@@ -75,11 +75,11 @@ class Model(object):
 
 
         #Model
-        self.train_logits = self.network(self.data['inputs'])
-        self.test_logits = self.network(self.test_inputs,reuse=True,is_training=False)
+        self.train_logits = self.network(self.train_data['inputs'])
+        self.test_logits = self.network(self.test_data['inputs'],reuse=True,is_training=False)
 
-        self.train_loss = class_loss(logits=self.train_logits, labels=self.train_labels)
-        self.test_loss = class_loss(logits=self.test_logits, labels=self.test_labels)
+        self.train_loss = class_loss(logits=self.train_logits, labels=self.train_data['labels'])
+        self.test_loss = class_loss(logits=self.test_logits, labels=self.test_data['labels'])
 
 
         #Training
