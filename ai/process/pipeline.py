@@ -3,6 +3,7 @@ import os
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.platform import gfile
+from sklearn.model_selection import train_test_split
 
 class ImageClass():
     def __init__(self,name,image_paths):
@@ -27,20 +28,32 @@ def get_files_and_labels():
     labels = np.asarray(labels)
     return filenames, labels 
 
-
-def construct_dataset(input_dim,batch_size):
+def final_split(input_dim,batch_size):
     data = get_files_and_labels()
     filenames = data[0]
     labels = data[1]
+
+    train_inputs, train_labels, test_inputs, test_outputs = train_test_split(filenames, labels, test_size = 0.2)
+    
+    train_data = construct_dataset(train_inputs, train_labels, input_dim, batch_size)
+    test_data = construct_dataset(test_inputs, test_labels, input_dim, batch_size)
+
+    return train_data, test_data
+
+def construct_dataset(inputs, labels, input_dim,batch_size):
     with tf.device('/cpu:0'):
-        dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
+        dataset = tf.data.Dataset.from_tensor_slices((inputs, labels))
         dataset = dataset.shuffle(len(filenames))
         dataset = dataset.map(lambda x, y:image_parse(x,y,input_dim), num_parallel_calls=3)
         dataset = dataset.map(lambda x, y:train_preprocess(x,y,batch_size), num_parallel_calls=3)
         dataset = dataset.batch(batch_size,True)
         dataset = dataset.prefetch(1)
 
-    return dataset
+        iterator = dataset.make_initializable_iterator()
+        inputs,labels = iterator.get_next()
+        init_op = iterator.initalizer
+
+    return {'inputs':images,'labels':labels,'init_op':init_op,'count': len(labels)}
 
 def image_parse(filename, label, input_dim):
     image_string = tf.read_file(filename)
@@ -62,15 +75,4 @@ def train_preprocess(image, label, batch_size):
 
     return image, label
 
-
-data = construct_dataset(32,2)
-with tf.Session() as sess:
-    # Initialize the iterator
-    sess.run(init_op)
-    print(next_element)
-    print(sess.run(next_element))
-    print(sess.run(next_element))
-    # Move the iterator back to the beginning
-    #sess.run(init_op)
-    #print(sess.run(next_element))
-
+x, y = final_split(32, 10)

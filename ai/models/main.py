@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('--mode', type=str, default='train', help='train or test mode?')
     parser.add_argument('--restore', type=bool, default=False, help='To restore model')
 
-    parser.add_argument('--img_size', type=int, default=10, help='The dim of the images')
+    parser.add_argument('--img_size', type=int, default=32, help='The dim of the images')
     parser.add_argument('--z_dim', type=int, default=3, help='Z dim of the images')
     parser.add_argument('--label_dim', type=int, default=10, help='Num output categories')
     parser.add_argument('--channels', type=int, default=64, help='Number of conv channels')

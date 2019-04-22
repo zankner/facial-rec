@@ -14,13 +14,6 @@ class Model(object):
         self.model_name = 'model_name'
         self.sess = sess
 
-        #self.train_x, self.train_y, self.test_x, self.test_y = load_data()
-
-        self.train_x =np.random.rand(args.batch_size,args.img_size,args.img_size,args.z_dim)
-        self.test_x = np.random.rand(10, args.img_size, args.img_size, args.z_dim)
-        self.train_y = np.random.rand(args.batch_size, args.label_dim)
-        self.test_y = np.random.rand(10, args.label_dim)
-
         self.checkpoint_dir = args.checkpoint_dir
         self.log_dir = args.log_dir
 
@@ -29,11 +22,14 @@ class Model(object):
         self.img_size = args.img_size
         self.z_dim = args.z_dim
         self.label_dim = args.label_dim
-        
+
         self.channels = args.channels
         self.epochs = args.epochs
         self.batch_size = args.batch_size
-        self.iterations = self.test_x.shape[0] // self.batch_size
+
+        self.data, data_len = construct_dataset(self.img_dim, self.batch_size)
+
+        self.iterations = data_len // self.batch_size
         self.use_bias = args.use_bias 
 
         self.learning_rate = args.lr
@@ -79,11 +75,11 @@ class Model(object):
 
 
         #Model
-        self.train_logits = self.network(self.train_inputs)
+        self.train_logits = self.network(self.data['inputs'])
         self.test_logits = self.network(self.test_inputs,reuse=True,is_training=False)
 
-        self.train_loss, self.train_accuracy = class_loss(logits=self.train_logits, labels=self.train_labels)
-        self.test_loss, self.test_accuracy = class_loss(logits=self.test_logits, labels=self.test_labels)
+        self.train_loss = class_loss(logits=self.train_logits, labels=self.train_labels)
+        self.test_loss = class_loss(logits=self.test_logits, labels=self.test_labels)
 
 
         #Training
@@ -92,13 +88,11 @@ class Model(object):
 
         #Summary
         self.summary_train_loss = tf.summary.scalar('train_loss', self.train_loss)
-        self.summary_train_accuracy = tf.summary.scalar('train_accuracy', self.train_accuracy)
 
         self.summary_test_loss = tf.summary.scalar('test_loss', self.test_loss)
-        self.summary_test_accuracy = tf.summary.scalar('test_accuracy', self.test_accuracy)
 
-        self.train_summary = tf.summary.merge([self.summary_train_loss,self.summary_train_accuracy])
-        self.test_summary = tf.summary.merge([self.summary_test_loss,self.summary_test_accuracy])
+        self.train_summary = tf.summary.merge([self.summary_train_loss])
+        self.test_summary = tf.summary.merge([self.summary_test_loss])
 
 
 
@@ -115,75 +109,19 @@ class Model(object):
         #writer to write summary
         self.writer = tf.summary.FileWriter(self.log_dir + '/' + self.model_dir, self.sess.graph)
 
-        #Load the dataset
-        dataset = construct_dataset(self.img_dim, self.batch_size)
+        start_time = time.time()
 
         for epoch in range(self.epochs):
-            train_dict = {self.train_inputs}
 
-        #restore checkpoint if it exists
-        if self.restore:
-            can_load, checkpoint_counter = self.load(self.checkpoint_dir)
-            if can_load:
-                start_epoch = (int)(checkpoint_counter / self.iterations)
-                start_batch_id = checkpoint_counter - start_epoch * self.iterations
-                counter = checkpoint_counter
-            else:
-                start_epoch = 0
-                start_batch_id = 0
-                counter = 1
-                print('Load Failed...')
-        else:
-            start_epoch = 0
-            start_batch_id = 0
-            counter = 1
-            print('Restarting from fresh')
-        start_time = time.time()
-        #loop each epoch
-        for epoch in range(start_epoch, self.epochs):
-            for batch_id in range(start_batch_id, self.iterations):
-                batch_x = self.train_x[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
-                batch_y = self.train_y[batch_id*self.batch_size:(batch_id+1)*self.batch_size]
-
-                train_dict = {
-                    self.train_inputs : batch_x,
-                    self.train_labels : batch_y,
-                    self.lr : self.learning_rate
-                }
+            self.sess.run(init_op)
+            
+            for batch in range(self.iterations):
                 
-                test_dict = {
-                    self.test_inputs : self.test_x,
-                    self.test_labels : self.test_y
-                }
-                
-                #update network
-                _, summary_str, train_loss, train_accuracy = self.sess.run(
-                    [self.optim, self.train_summary, self.train_loss, self.train_accuracy],
-                    feed_dict = train_dict
-                    )
-                self.writer.add_summary(summary_str, counter)
+                _, summary_str, train_loss = self.run([self.optim,self.train_summary,self.train_loss])
 
-                #update test
-                
-                summary_str, test_loss, test_accuracy = self.sess.run(
-                    [self.test_summary, self.test_loss, self.test_accuracy],
-                    feed_dict = test_dict 
-                    )
-                self.writer.add_summary(summary_str, counter)
-                
+                test_summary_str, test_loss = self.run([self.test_summary, self.test_loss])
 
-                #display netowrk status
-                counter +=1
-                print ('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_acc: %.2f, test_acc %.2f'%(epoch, batch_id, self.iterations, time.time() - start_time, train_accuracy, test_accuracy))
-
-            #Reset the batch id
-            start_batch_id = 0
-
-            #Save the model after an epoch
-            self.save(self.checkpoint_dir, counter)
-
-        #Save model on final step
-        self.save(self.checkpoint_dir, counter)
+                print('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_loss: %.2f, test_test %.2f'%(epoch, batch, self.iterations, time.time() - start_time, train_loss, test_loss))
 
     @property
     def model_dir(self):
