@@ -33,8 +33,11 @@ def final_split(input_dim,batch_size):
     filenames = data[0]
     labels = data[1]
 
+    print(len(filenames))
+    print(len(labels))
+
     train_inputs, train_labels, test_inputs, test_outputs = train_test_split(filenames, labels, test_size = 0.2)
-    
+
     train_data = construct_dataset(train_inputs, train_labels, input_dim, batch_size)
     test_data = construct_dataset(test_inputs, test_labels, input_dim, batch_size)
 
