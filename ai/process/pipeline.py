@@ -21,9 +21,10 @@ def get_files_and_labels():
         if os.path.isdir(label_path):
             images = os.listdir(label_path)
             image_paths = [os.path.join(label_path, img) for img in images if os.path.isfile(os.path.join(label_path, img))]
-            for img_path in image_paths:
-                filenames.append(img_path)
-                labels.append(label)
+            if len(image_paths > 4):
+                for img_path in image_paths:
+                    filenames.append(img_path)
+                    labels.append(label)
     filenames = np.asarray(filenames)
     labels = np.asarray(labels)
     return filenames, labels 

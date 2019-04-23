@@ -2,6 +2,7 @@ import tensorflow as tf
 import time
 import os
 import numpy as np
+from tqdm import trange
 from ops import *
 
 import sys
@@ -114,14 +115,16 @@ class Model(object):
         for epoch in range(self.epochs):
 
             self.sess.run(init_op)
+
+            t = trange(self.iterations)
             
-            for batch in range(self.iterations):
+            for batch in range(t):
                 
                 _, summary_str, train_loss = self.run([self.optim,self.train_summary,self.train_loss])
 
                 test_summary_str, test_loss = self.run([self.test_summary, self.test_loss])
 
-                print('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_loss: %.2f, test_test %.2f'%(epoch, batch, self.iterations, time.time() - start_time, train_loss, test_loss))
+                t.set_postfix('Epoch: [%2d] [%5d/%5d] time: %4.4f, train_loss: %.2f, test_test %.2f'%(epoch, batch, self.iterations, time.time() - start_time, train_loss, test_loss))
 
     @property
     def model_dir(self):
