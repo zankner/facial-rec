@@ -1,2 +1,2 @@
 # facial-rec-auth
-Racial Recognition Software to unlock doors
+Facial Recognition Software to unlock doors
